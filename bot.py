@@ -5,7 +5,7 @@ from telegram import Update, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext, filters
 
 # ID Google Таблицы
-SPREADSHEET_ID = "1s1F-DONBzaYH8n1JmQmuWS5Z1HW4lH4cz1Vl5wXSqyw"
+SPREADSHEET_ID = "1g1XqVEb0B6vI7f0Oh1QDjGQ-hEwtGjoMPSzwvOWwrZ4"
 
 
 
