@@ -4,6 +4,7 @@ import datetime
 from telegram import Update, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackContext, filters
 
+
 # ID Google Таблиц для разных языков
 SPREADSHEET_ID_RU = "1g1XqVEb0B6vI7f0Oh1QDjGQ-hEwtGjoMPSzwvOWwrZ4"  # Замените на реальный ID
 SPREADSHEET_ID_KG = "1xqsSnmsgoMN69fzk5BIDfd9OsphfLQHz42_V60RfNao"  # Замените на реальный ID
