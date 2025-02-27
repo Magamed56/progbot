@@ -81,7 +81,7 @@ async def show_main_menu(update: Update, context: CallbackContext) -> None:
         text = "Выберите раздел:"
     else:
         keyboard = [
-            [KeyboardButton("📚 Лекциялар"), KeyboardButton("🛠 Лабораториялык иштер")],
+            [KeyboardButton("📚 Лекциялар"), KeyboardButton("🛠 Лаборатория")],
         ]
         text = "Бөлүмдү тандаңыз:"
 
@@ -149,7 +149,7 @@ async def show_task(update: Update, context: CallbackContext) -> None:
 app = Application.builder().token(os.getenv("TOKEN")).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.TEXT & filters.Regex("🇷🇺 Русский|🇰🇬 Кыргызский"), choose_language))
-app.add_handler(MessageHandler(filters.TEXT & filters.Regex("📚 Лекционные темы|🛠 Лабораторные работы|📚 Лекциялар|🛠 Лабораториялык иштер"), show_topics))
+app.add_handler(MessageHandler(filters.TEXT & filters.Regex("📚 Лекционные темы|🛠 Лабораторные работы|📚 Лекциялар|🛠 Лаборатория"), show_topics))
 app.add_handler(MessageHandler(filters.TEXT, show_task))
 
 if __name__ == "__main__":
