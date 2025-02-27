@@ -96,7 +96,7 @@ async def show_topics(update: Update, context: CallbackContext) -> None:
     if language == "ru":
         task_type = "Лекция" if update.message.text == "📚 Лекционные темы" else "Лабораторная"
     else:
-        task_type = "Лекция" if update.message.text == "📚 Лекциялар" else "Лабораториялык иш"
+        task_type = "Лекция" if update.message.text == "📚 Лекциялар" else "Лаборатория"
 
     tasks = get_tasks(task_type, language)
 
