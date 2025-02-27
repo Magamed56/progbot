@@ -23,35 +23,24 @@ def get_tasks(task_type, language):
         print(f"Ошибка загрузки таблицы: {e}")
         return {}
 
-    now = datetime.datetime.now()
+    today = datetime.date.today()
     tasks = {}
 
     for _, row in df.iterrows():
         if str(row.get("Тип", "")).strip() == task_type:
             unlock_date_str = str(row.get("Дата разблокировки", "")).strip()
-            unlock_time_str = str(row.get("Время разблокировки", "")).strip()
 
             try:
-                # Парсим дату и время
                 unlock_date = datetime.datetime.strptime(unlock_date_str, "%Y-%m-%d").date()
-                unlock_time = datetime.datetime.strptime(unlock_time_str, "%H:%M").time()
-                unlock_datetime = datetime.datetime.combine(unlock_date, unlock_time)
-
-                # Вычисляем разницу во времени
-                time_left = unlock_datetime - now
-                days_left = time_left.days
-                hours_left = time_left.seconds // 3600
-                minutes_left = (time_left.seconds % 3600) // 60
+                days_left = (unlock_date - today).days
             except ValueError:
-                continue  # Пропустить, если дата или время неправильные
+                continue  # Пропустить, если дата неправильная
 
             tasks[row["Название"]] = {
                 "description": row.get("Описание", "Нет описания"),
                 "link": row.get("Ссылка", "#"),
-                "unlock_datetime": unlock_datetime,
-                "days_left": days_left,
-                "hours_left": hours_left,
-                "minutes_left": minutes_left
+                "unlock_date": unlock_date,
+                "days_left": days_left
             }
 
     return tasks
@@ -117,8 +106,8 @@ async def show_topics(update: Update, context: CallbackContext) -> None:
 
     keyboard = []
     for name, details in tasks.items():
-        if details["days_left"] > 0 or details["hours_left"] > 0 or details["minutes_left"] > 0:
-            text = f"{name} (⏳ {details['days_left']} дн., {details['hours_left']} ч., {details['minutes_left']} мин.)" if language == "ru" else f"{name} (⏳ {details['days_left']} күн, {details['hours_left']} саат, {details['minutes_left']} мүнөт)"
+        if details["days_left"] > 0:
+            text = f"{name} (⏳ {details['days_left']} дн.)" if language == "ru" else f"{name} (⏳ {details['days_left']} күн)"
         else:
             text = name
         keyboard.append([KeyboardButton(text)])
@@ -144,21 +133,13 @@ async def show_task(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text("Тема не найдена." if language == "ru" else "Тема табылган жок.")
         return
 
-    now = datetime.datetime.now()
-    if now < task["unlock_datetime"]:
-        time_left = task["unlock_datetime"] - now
-        days_left = time_left.days
-        hours_left = time_left.seconds // 3600
-        minutes_left = (time_left.seconds % 3600) // 60
-
+    if task["days_left"] > 0:
         await update.message.reply_text(
             f"⛔ Тема \"{task_name}\" пока недоступна.\n"
-            f"📅 Она откроется {task['unlock_datetime'].strftime('%Y-%m-%d %H:%M')}.\n"
-            f"⏳ Осталось: {days_left} дн., {hours_left} ч., {minutes_left} мин."
+            f"📅 Она откроется {task['unlock_date']} (через {task['days_left']} дней)."
             if language == "ru" else
             f"⛔ Тема \"{task_name}\" азырынча жеткиликтүү эмес.\n"
-            f"📅 Ал {task['unlock_datetime'].strftime('%Y-%m-%d %H:%M')} ачылат.\n"
-            f"⏳ Калды: {days_left} күн, {hours_left} саат, {minutes_left} мүнөт."
+            f"📅 Ал {task['unlock_date']} күнү ачылат ({task['days_left']} күн калды)."
         )
     else:
         text = f"📌 *{task_name}*\n{task['description']}\n[Вот вам ссылка]({task['link']})"
