@@ -1,3 +1,5 @@
+
+
 import os
 import pandas as pd
 import datetime
@@ -13,12 +15,11 @@ USER_LANGUAGE = {}
 
 # Функция загрузки данных из таблицы
 def get_tasks(task_type, language):
-    # Выбираем ID таблицы в зависимости от языка
     spreadsheet_id = SPREADSHEET_ID_RU if language == "ru" else SPREADSHEET_ID_KG
     url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/gviz/tq?tqx=out:csv"
-    
+
     try:
-        df = pd.read_csv(url)  # Загружаем таблицу
+        df = pd.read_csv(url)
     except Exception as e:
         print(f"Ошибка загрузки таблицы: {e}")
         return {}
@@ -34,7 +35,7 @@ def get_tasks(task_type, language):
                 unlock_date = datetime.datetime.strptime(unlock_date_str, "%Y-%m-%d").date()
                 days_left = (unlock_date - today).days
             except ValueError:
-                continue  # Пропустить, если дата неправильная
+                continue  # пропустить ошибочную дату
 
             tasks[row["Название"]] = {
                 "description": row.get("Описание", "Нет описания"),
@@ -72,31 +73,47 @@ async def choose_language(update: Update, context: CallbackContext) -> None:
 # Главное меню
 async def show_main_menu(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
-    language = USER_LANGUAGE.get(user_id, "ru")  # По умолчанию русский
+    language = USER_LANGUAGE.get(user_id, "ru")  # по умолчанию русский
 
     if language == "ru":
         keyboard = [
             [KeyboardButton("📚 Лекционные темы"), KeyboardButton("🛠 Лабораторные работы")],
+            [KeyboardButton("📖 СРС")]
         ]
         text = "Выберите раздел:"
     else:
         keyboard = [
             [KeyboardButton("📚 Лекциялар"), KeyboardButton("🛠 Лаборатория")],
+            [KeyboardButton("📖 СРС")]
         ]
         text = "Бөлүмдү тандаңыз:"
 
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await update.message.reply_text(text, reply_markup=reply_markup)
 
-# Показывает список тем
+# Показать список тем
 async def show_topics(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
-    language = USER_LANGUAGE.get(user_id, "ru")  # По умолчанию русский
+    language = USER_LANGUAGE.get(user_id, "ru")  # по умолчанию русский
 
     if language == "ru":
-        task_type = "Лекция" if update.message.text == "📚 Лекционные темы" else "Лабораторная"
+        if update.message.text == "📚 Лекционные темы":
+            task_type = "Лекция"
+        elif update.message.text == "🛠 Лабораторные работы":
+            task_type = "Лабораторная"
+        elif update.message.text == "📖 СРС":
+            task_type = "СРС"
+        else:
+            return
     else:
-        task_type = "Лекция" if update.message.text == "📚 Лекциялар" else "Лабораторная"
+        if update.message.text == "📚 Лекциялар":
+            task_type = "Лекция"
+        elif update.message.text == "🛠 Лаборатория":
+            task_type = "Лабораторная"
+        elif update.message.text == "📖 СРС":
+            task_type = "СРС"
+        else:
+            return
 
     tasks = get_tasks(task_type, language)
 
@@ -116,17 +133,22 @@ async def show_topics(update: Update, context: CallbackContext) -> None:
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     await update.message.reply_text(f"📜 {task_type}:" if language == "ru" else f"📜 {task_type}:", reply_markup=reply_markup)
 
-# Показывает выбранную тему
+# Показать выбранную тему
 async def show_task(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
-    language = USER_LANGUAGE.get(user_id, "ru")  # По умолчанию русский
+    language = USER_LANGUAGE.get(user_id, "ru")  # по умолчанию русский
 
     if update.message.text == ("⬅ Назад" if language == "ru" else "⬅ Артка"):
         await show_main_menu(update, context)
         return
 
-    task_name = update.message.text.split(" (⏳")[0]  # Убираем таймер из кнопки
-    tasks = {**get_tasks("Лекция", language), **get_tasks("Лабораторная", language)}  # Объединяем лекции и лабораторные
+    task_name = update.message.text.split(" (⏳")[0]  # убираем таймер с кнопки
+    tasks = {
+        **get_tasks("Лекция", language),
+        **get_tasks("Лабораторная", language),
+        **get_tasks("СРС", language)
+    }
+
     task = tasks.get(task_name)
 
     if not task:
@@ -149,7 +171,9 @@ async def show_task(update: Update, context: CallbackContext) -> None:
 app = Application.builder().token(os.getenv("TOKEN")).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.TEXT & filters.Regex("🇷🇺 Русский|🇰🇬 Кыргызский"), choose_language))
-app.add_handler(MessageHandler(filters.TEXT & filters.Regex("📚 Лекционные темы|🛠 Лабораторные работы|📚 Лекциялар|🛠 Лаборатория"), show_topics))
+app.add_handler(MessageHandler(filters.TEXT & filters.Regex(
+    "📚 Лекционные темы|🛠 Лабораторные работы|📖 СРС|📚 Лекциялар|🛠 Лаборатория"
+), show_topics))
 app.add_handler(MessageHandler(filters.TEXT, show_task))
 
 if __name__ == "__main__":
